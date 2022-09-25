@@ -1,0 +1,11 @@
+{
+// Configure your Run and Preview buttons here.
+
+// Run button configuration
+  "commands": {
+        "Compile & Run": "make && ./assignment3",
+        "Compile": "make",
+        "Run": "./assignment3",
+        "Clean": "make clean"
+    }
+}
