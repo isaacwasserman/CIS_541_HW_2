@@ -14,6 +14,18 @@
 vector<Task*> *task_list;
 vector<Task_Control> *job_list;
 
+Task_Control select_job(vector<Task_Control> *job_list, int policy){
+    // RM
+    if(policy == 0){
+        job_priority_by_id = rm_prioritize_jobs(jobs, rm_task_priority_by_id);
+    }
+    // EDF
+    else {
+        job_priority_by_id = edf_prioritize_jobs(jobs);
+    }
+    return job_list->front();
+}
+
 int main(void){
     // COMPLETE THIS FUNCTION TO SATISFY THE SPECIFICATIONS
     
@@ -96,7 +108,7 @@ int main(void){
         active_sim_time++;
 
         // choose highest priority task
-        Task_Control& current_job = job_list->front();
+        Task_Control& current_job = select_job(job_list, policy);
         cout << "Scheduler: picking task " << current_job.task_id <<endl;
         cout << "Task " << current_job.task_id << ", Job "<< current_job.current_period \
             << ": starts executing " << current_job.executed+1 << " of " << current_job.max_execution_time << endl;

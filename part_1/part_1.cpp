@@ -69,7 +69,12 @@ int main(){
 
     // simulate task executions
     simulate(policy, num_tasks, tasks, sim_start_time, max_sim_time, kill_late_tasks);
-    // simulate("RM", 3, {{1, 0, 5, 2, 5, 0},{2, 0, 3, 1, 3, 0},{3, 0, 10, 3, 10, 0}}, 0, 50, true);
+
+    // Task tasks[3];
+    // tasks[0] = {1, 0, 5, 2, 5, 0};
+    // tasks[1] = {2, 0, 3, 1, 3, 0};
+    // tasks[2] = {3, 0, 10, 3, 10, 0};
+    // simulate("EDF", 3, tasks, 2, 7, true);
     return 0;
 }
 
@@ -103,6 +108,9 @@ bool should_terminate(Job job, int current_time, bool kill_late_tasks){
 bool by_second_element(std::pair<int,int> a, std::pair<int,int> b){
   return (a.second < b.second);
 }
+bool by_second_element_nested(std::pair<pair<int,int>,int> a, std::pair<pair<int,int>,int> b){
+  return (a.second < b.second);
+}
 
 vector<int> rm_prioritize_tasks(Task * tasks, int num_tasks){
     vector<int> task_priority_by_id;
@@ -115,10 +123,10 @@ vector<int> rm_prioritize_tasks(Task * tasks, int num_tasks){
     for(int i = 0; i < num_tasks; i++){
         prioritized_ids.push_back(id_and_period_pairs[i].first);
     }
-    for(int i = 0; i < prioritized_ids.size(); i++){
-        std::cout << prioritized_ids[i] << ", ";
-    }
-    std::cout << std::endl;
+    // for(int i = 0; i < prioritized_ids.size(); i++){
+    //     std::cout << prioritized_ids[i] << ", ";
+    // }
+    // std::cout << std::endl;
     return prioritized_ids;
 }
 
@@ -132,32 +140,46 @@ vector<pair<int, int>> rm_prioritize_jobs(vector<Job> jobs, vector<int> prioriti
             }
         }
     }
-    for(int i = 0; i < job_priority_by_id.size(); i++){
-        std::cout << "{" << job_priority_by_id[i].first << ", " << job_priority_by_id[i].second << "}, ";
-    }
-    std::cout << std::endl;
+    // for(int i = 0; i < job_priority_by_id.size(); i++){
+    //     std::cout << "{" << job_priority_by_id[i].first << ", " << job_priority_by_id[i].second << "}, ";
+    // }
+    // std::cout << std::endl;
     return job_priority_by_id;
 }
 
-Job select_job(vector<Job> jobs, Task * tasks, int num_tasks, int current_time, string policy){
+vector<pair<int,int>> edf_prioritize_jobs(vector<Job> jobs){
+    vector<pair<pair<int,int>,int>> job_deadline_by_id;
+    for(int i = 0; i < jobs.size(); i++){
+        job_deadline_by_id.push_back({{jobs[i].task_id, jobs[i].job_id}, jobs[i].exact_deadline});
+    }
+    sort(job_deadline_by_id.begin(), job_deadline_by_id.end(), by_second_element_nested);
+    vector<pair<int, int>> job_priority_by_id;
+    for(int i = 0; i < job_deadline_by_id.size(); i++){
+        job_priority_by_id.push_back(job_deadline_by_id[i].first);
+    }
+    return job_priority_by_id;
+}
+
+Job select_job(vector<Job> jobs, vector<int> rm_task_priority_by_id, int current_time, string policy){
+  vector<pair<int, int>> job_priority_by_id;
   if(policy == "RM"){
-    vector<int> task_priority_by_id = rm_prioritize_tasks(tasks, num_tasks);
-    vector<pair<int, int>> job_priority_by_id = rm_prioritize_jobs(jobs, task_priority_by_id);
-    for(int k = 0; k < job_priority_by_id.size(); k++){
+    job_priority_by_id = rm_prioritize_jobs(jobs, rm_task_priority_by_id);
+    
+  }
+  else if(policy == "EDF"){
+    job_priority_by_id = edf_prioritize_jobs(jobs);
+  }
+  else {
+    std::cout << "policy not recognized" << std::endl;
+    return jobs[0];
+  }
+  for(int k = 0; k < job_priority_by_id.size(); k++){
         for(int i = 0; i < jobs.size(); i++){
             if(jobs[i].task_id == job_priority_by_id[k].first && jobs[i].job_id == job_priority_by_id[k].second){
                 return jobs[i];
             }
         }
     }
-  }
-  else if(policy == "EDF"){
-    return jobs[0];
-  }
-  else {
-    std::cout << "policy not recognized" << std::endl;
-    return jobs[0];
-  }
 }
 
 // Simulates task executions. Prints list of task executions.
@@ -177,8 +199,21 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
     Job current_job;
     int current_task_id, current_job_id;
 
+    // int periods[num_tasks];
+    // for(int i = 0; i < num_tasks; i++){
+    //     periods[i] = tasks[i].period;
+    // }
+    // ll period_lcm = findlcm(periods, num_tasks);
+    // for(int i = 0; i < num_tasks; i++){
+    //     if(tasks[i].max_execution_time == 0){
+    //         tasks[i].max_execution_time = period_lcm;
+    //     }
+    // }
+
     // maintain list of active jobs (task instantiations) waiting to be scheduled for execution
     vector<Job> jobs;
+
+    std::vector<int> rm_task_priority_by_id = rm_prioritize_tasks(tasks, num_tasks);
 
     // while loop steps through time
     while (current_time < start_time + max_sim_time){
@@ -198,6 +233,7 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
             // Terminate if past due
             if(should_terminate(jobs[i], current_time, kill_late_tasks)){
                 jobs.erase(jobs.begin()+i);
+                num_deadline_misses++;
             }
             // Terminate if done
             if(jobs[i].current_execution_time > jobs[i].max_execution_time){
@@ -207,7 +243,7 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
 
         if(!jobs.empty()){
             // select a job
-            current_job = select_job(jobs, tasks, num_tasks, current_time, policy);
+            current_job = select_job(jobs, rm_task_priority_by_id, current_time, policy);
             current_task_id = current_job.task_id;
             current_job_id = current_job.job_id;
 
@@ -237,6 +273,24 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
     cout << "CPU utilization: " << to_string(float(active_sim_time)/float(max_sim_time)) << endl;
 }
 
+int gcd(int a, int b){
+    if(a == 0){
+        return b;
+    }
+    return gcd(b % a, a);
+}
+
+ll lcm(vector<int> values, int i){
+    if(i == values.size() - 1){
+        return values[i];
+    }
+    else {
+        int f1 = values[i];
+        int f2 = lcm(values, i+1);
+        return (f1*f2)/gcd(f1,f2);
+    }
+}
+
 // calculates least common multiple of n integers
 // parameters:
 //      array of n integers
@@ -245,8 +299,9 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
 //      least common multiple of integers in array
 ll findlcm(int arr[], int n)
 {
-
-    // YOUR IMPLEMENTATION HERE
-
-    return 0;
+    vector<int> values;
+    for(int i = 0; i < n; i++){
+        values.push_back(arr[i]);
+    }
+    return lcm(values, 0);
 }
