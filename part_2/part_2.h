@@ -41,6 +41,8 @@ class Task{
         bool pause_  = false; // bool for whether job is running or not
         int counter = 1; // number of jobs that have been instantiated
         int id;
+        pthread_mutex_t lock =  PTHREAD_MUTEX_INITIALIZER; 
+        pthread_cond_t cond_var = PTHREAD_COND_INITIALIZER;
         Task(int,int,int,int,int);
 
         ~Task();

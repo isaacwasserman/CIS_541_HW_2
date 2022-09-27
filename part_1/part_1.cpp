@@ -78,7 +78,7 @@ int main(){
     return 0;
 }
 
-bool should_instatiate(Task task, int current_time){
+bool should_instantiate(Task task, int current_time){
     int lifetime = current_time - task.start;
     if(lifetime >= 0 && lifetime % task.period == 0){
         return true;
@@ -96,8 +96,8 @@ Job instantiate(Task * tasks, int task_index, int current_time){
     return job;
 }
 
-bool should_terminate(Job job, int current_time, bool kill_late_tasks){
-    if(current_time > job.exact_deadline && kill_late_tasks){
+bool should_terminate(Job job, int current_time){
+    if(current_time > job.exact_deadline){
         return true;
     }
     else {
@@ -222,7 +222,7 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
 
         // Instantiate jobs that are ready
         for(int i = 0; i < num_tasks; i++){
-            if(should_instatiate(tasks[i], current_time)){
+            if(should_instantiate(tasks[i], current_time)){
                 Job new_job = instantiate(tasks, i, current_time);
                 jobs.push_back(new_job);
             }
@@ -231,8 +231,10 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
         // Clean out completed/overdue jobs
         for(int i = 0; i < jobs.size(); i++){
             // Terminate if past due
-            if(should_terminate(jobs[i], current_time, kill_late_tasks)){
-                jobs.erase(jobs.begin()+i);
+            if(should_terminate(jobs[i], current_time)){
+                if(kill_late_tasks){
+                    jobs.erase(jobs.begin()+i);
+                }
                 num_deadline_misses++;
             }
             // Terminate if done
