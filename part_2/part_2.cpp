@@ -250,7 +250,7 @@ void Task::execute(){
         this->pause_ = true;
         pthread_cond_wait(&(this->cond_var), &(this->lock));
         this->pause_ = false;
-        // cout << "Execute current task " << this->id << endl;
+        cout << "Execute current task " << this->id << endl;
     }
     pthread_mutex_unlock(&(this->lock));
 }

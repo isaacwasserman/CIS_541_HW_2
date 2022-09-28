@@ -97,7 +97,9 @@ Job instantiate(Task * tasks, int task_index, int current_time){
 }
 
 bool should_terminate(Job job, int current_time){
-    if(current_time > job.exact_deadline){
+    if(current_time >= job.exact_deadline){
+        // cout << "task " << job.task_id << " job " << job.job_id << " deadline passed" << endl;
+        // cout << "current time is " << current_time <<  ", deadline was at " << job.exact_deadline << endl;
         return true;
     }
     else {
@@ -109,7 +111,12 @@ bool by_second_element(std::pair<int,int> a, std::pair<int,int> b){
   return (a.second < b.second);
 }
 bool by_second_element_nested(std::pair<pair<int,int>,int> a, std::pair<pair<int,int>,int> b){
-  return (a.second < b.second);
+    if(a.second != b.second){
+        return (a.second < b.second);
+    }
+    else {
+        return (a.first.first < b.first.first);
+    }
 }
 
 vector<int> rm_prioritize_tasks(Task * tasks, int num_tasks){
@@ -230,19 +237,21 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
 
         // Clean out completed/overdue jobs
         for(int i = 0; i < jobs.size(); i++){
-            // Terminate if past due
-            if(should_terminate(jobs[i], current_time)){
-                if(kill_late_tasks){
-                    jobs.erase(jobs.begin()+i);
-                }
-                if(jobs[i].deadline_missed == false){
-                    num_deadline_misses++;
-                    jobs[i].deadline_missed = true;
-                }
-            }
             // Terminate if done
             if(jobs[i].current_execution_time > jobs[i].max_execution_time){
                 jobs.erase(jobs.begin()+i);
+            }
+            // Terminate if past due
+            if(should_terminate(jobs[i], current_time)){
+                if(jobs[i].deadline_missed == false){
+                    // cout << "task " << jobs[i].task_id << " job " << jobs[i].job_id << " deadline passed" << endl;
+                    // cout << "current time is " << current_time <<  ", deadline was at " << jobs[i].exact_deadline << endl;
+                    num_deadline_misses++;
+                    jobs[i].deadline_missed = true;
+                }
+                if(kill_late_tasks){
+                    jobs.erase(jobs.begin()+i);
+                }
             }
         }
 
