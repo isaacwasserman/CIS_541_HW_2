@@ -22,6 +22,7 @@ struct Job{
     int max_execution_time; // (ms)
     int period; // (ms)
     int exact_deadline; // exact deadline (ms). calculated from start of period
+    bool deadline_missed = false;
 };
 
 void simulate(string policy, int num_tasks, Task * tasks, int start_time, int max_sim_time, bool kill_late_tasks);

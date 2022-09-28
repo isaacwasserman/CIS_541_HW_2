@@ -26,6 +26,7 @@ struct Task_Control{
     int max_execution_time;
     int executed;
     int deadline;
+    bool deadline_missed = false;
     Task_Control(int,int,int,int,int,int);
 };
 

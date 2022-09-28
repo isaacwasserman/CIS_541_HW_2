@@ -89,9 +89,6 @@ Task_Control instantiate(Task *task, int current_time){
 
 bool should_terminate(Task_Control job, int current_time){
     if(current_time >= job.deadline && job.executed != job.max_execution_time){
-        // cout << "missed deadline for task " << job.task_id << " job " << job.job_id << endl;
-        // cout << "Deadline was " << job.deadline << ", and steps executed was " << job.executed << endl;
-        // cout << "Current time was " << current_time << endl;
         return true;
     }
     else {
@@ -171,7 +168,10 @@ int main(void){
                 if(kill_late_tasks){
                     job_list->erase(job_list->begin()+i);
                 }
-                num_deadline_misses++;
+                if(job_list->at(i).deadline_missed == false){
+                    num_deadline_misses++;
+                    job_list->at(i).deadline_missed = true;
+                }
             }
             // Terminate if done
             if(job_list->at(i).executed >= job_list->at(i).max_execution_time){
@@ -179,10 +179,10 @@ int main(void){
             }
         }
 
-        cout << "Jobs:" << endl;
-        for(int i = 0; i < job_list->size(); i++){
-          cout << "(" << job_list->at(i).task_id << ", " << job_list->at(i).job_id << ", " << job_list->at(i).period << ")" << endl;
-        }
+        // cout << "Jobs:" << endl;
+        // for(int i = 0; i < job_list->size(); i++){
+        //   cout << "(" << job_list->at(i).task_id << ", " << job_list->at(i).job_id << ", " << job_list->at(i).period << ")" << endl;
+        // }
 
         cout << "Time: " << time_ << endl;
 
@@ -250,7 +250,7 @@ void Task::execute(){
         this->pause_ = true;
         pthread_cond_wait(&(this->cond_var), &(this->lock));
         this->pause_ = false;
-        cout << "Execute current task " << this->id << endl;
+        // cout << "Execute current task " << this->id << endl;
     }
     pthread_mutex_unlock(&(this->lock));
 }

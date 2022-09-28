@@ -235,7 +235,10 @@ void simulate(string policy, int num_tasks, Task * tasks, int start_time, int ma
                 if(kill_late_tasks){
                     jobs.erase(jobs.begin()+i);
                 }
-                num_deadline_misses++;
+                if(jobs[i].deadline_missed == false){
+                    num_deadline_misses++;
+                    jobs[i].deadline_missed = true;
+                }
             }
             // Terminate if done
             if(jobs[i].current_execution_time > jobs[i].max_execution_time){
